@@ -6,7 +6,7 @@ An AI-powered desktop app that diagnoses car engine problems from text descripti
 
 ---
 
-## ⚡ Quick Install (Windows)
+## Quick Install (Windows)
 
 Open **PowerShell** and run:
 
@@ -18,20 +18,20 @@ That's it! EngineAI will be installed and the `engineai` command will be availab
 
 ---
 
-## ✨ Features
+## Features
 
-- 🚗 **Symptom diagnosis** — describe your engine problem in plain English and get an instant AI diagnosis
-- 📷 **Photo analysis** — upload a photo of your engine bay, dashboard warning lights, or damage and the AI will tell you what's wrong
-- 🚦 **Severity ratings** — every diagnosis includes Critical 🔴 / Moderate 🟡 / Minor 🟢 ratings
-- 💵 **Repair cost estimates** — get a rough USD cost range for any repair
-- 🔧 **DIY vs mechanic** — the AI tells you if you can fix it yourself or need a professional
-- 💬 **Multi-turn conversation** — ask follow-up questions and the AI remembers the full context
-- 📋 **Session history** — previous conversations saved in the sidebar
-- 🔑 **Token saved automatically** — paste your GitHub token once and the app remembers it
+-  **Symptom diagnosis** — describe your engine problem in plain English and get an instant AI diagnosis
+-  **Photo analysis** — upload a photo of your engine bay, dashboard warning lights, or damage and the AI will tell you what's wrong
+-  **Severity ratings** — every diagnosis includes Critical 🔴 / Moderate 🟡 / Minor 🟢 ratings
+-  **Repair cost estimates** — get a rough USD cost range for any repair
+-  **DIY vs mechanic** — the AI tells you if you can fix it yourself or need a professional
+-  **Multi-turn conversation** — ask follow-up questions and the AI remembers the full context
+-  **Session history** — previous conversations saved in the sidebar
+-  **Token saved automatically** — paste your GitHub token once and the app remembers it
 
 ---
 
-## 📥 Installation
+##  Installation
 
 ### Option 1 — Download the installer (easiest)
 
@@ -58,7 +58,7 @@ npm start
 
 ---
 
-## 🔑 Getting a Free GitHub Token
+## Getting a Free GitHub Token
 
 EngineAI uses the GitHub Models API which is **completely free** — you just need a GitHub personal access token.
 
@@ -73,7 +73,7 @@ EngineAI uses the GitHub Models API which is **completely free** — you just ne
 
 ---
 
-## 🚀 How to Use
+## How to Use
 
 1. Open EngineAI from your Start Menu or type `engineai` in your terminal
 2. Paste your `ghp_` token in the **GitHub Token** field
@@ -93,7 +93,7 @@ EngineAI uses the GitHub Models API which is **completely free** — you just ne
 
 ---
 
-## 🛠️ Build from Source
+## Build from Source
 
 To build your own `.msi` installer:
 
@@ -109,7 +109,7 @@ The installer will be generated at `dist/EngineAI 1.0.0.msi`.
 
 ---
 
-## 🧰 Tech Stack
+## Tech Stack
 
 - **Electron** — desktop app framework
 - **GitHub Models API** — free AI inference (GPT-4o)
@@ -118,7 +118,7 @@ The installer will be generated at `dist/EngineAI 1.0.0.msi`.
 
 ---
 
-## ⚠️ Disclaimer
+## Disclaimer
 
 EngineAI provides AI-generated diagnostic suggestions for informational purposes only. Always consult a qualified mechanic before making repairs. The app is not responsible for any damage caused by acting on its suggestions.
 
