@@ -1,0 +1,39 @@
+{
+  "name": "engine-scanner",
+  "version": "1.0.0",
+  "description": "AI-powered car engine diagnostic desktop app",
+  "main": "main.js",
+  "author": "EngineAI",
+  "scripts": {
+    "start": "electron .",
+    "build": "electron-builder --win msi"
+  },
+  "build": {
+    "appId": "com.engineai.scanner",
+    "productName": "EngineAI",
+    "win": {
+      "target": "msi",
+      "icon": "icon.ico"
+    },
+    "msi": {
+      "oneClick": false,
+      "perMachine": false
+    },
+    "files": [
+      "main.js",
+      "preload.js",
+      "index.html",
+      "package.json",
+      "node_modules/**/*"
+    ]
+  },
+  "dependencies": {
+    "@azure-rest/ai-inference": "latest",
+    "@azure/core-auth": "latest",
+    "@azure/core-sse": "latest"
+  },
+  "devDependencies": {
+    "electron": "^29.0.0",
+    "electron-builder": "^24.0.0"
+  }
+}

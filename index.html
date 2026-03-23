@@ -1,0 +1,968 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>EngineAI — Car Diagnostic Scanner</title>
+<link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;500;600;700&family=Share+Tech+Mono&family=Inter:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0a0b0d;
+    --surface: #111318;
+    --surface2: #181c24;
+    --border: #1e2530;
+    --border2: #2a3340;
+    --accent: #e8511a;
+    --accent2: #ff6b35;
+    --text: #e8e6e0;
+    --text2: #8a9bb0;
+    --text3: #3a4555;
+    --green: #22c55e;
+    --yellow: #eab308;
+    --red: #ef4444;
+    --mono: 'Share Tech Mono', monospace;
+    --display: 'Rajdhani', sans-serif;
+    --body: 'Inter', sans-serif;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--body);
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    user-select: none;
+  }
+
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image:
+      linear-gradient(rgba(232,81,26,0.025) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(232,81,26,0.025) 1px, transparent 1px);
+    background-size: 48px 48px;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  /* Titlebar drag region */
+  .titlebar {
+    height: 40px;
+    background: #070809;
+    -webkit-app-region: drag;
+    display: flex;
+    align-items: center;
+    padding: 0 20px;
+    gap: 12px;
+    border-bottom: 1px solid var(--border);
+    flex-shrink: 0;
+    position: relative;
+    z-index: 100;
+  }
+
+  .titlebar-logo {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    -webkit-app-region: no-drag;
+  }
+
+  .hex {
+    width: 22px;
+    height: 22px;
+    background: var(--accent);
+    clip-path: polygon(50% 0%,100% 25%,100% 75%,50% 100%,0% 75%,0% 25%);
+  }
+
+  .titlebar-name {
+    font-family: var(--display);
+    font-size: 15px;
+    font-weight: 700;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    color: var(--text);
+  }
+
+  .titlebar-name span { color: var(--accent); }
+
+  .titlebar-status {
+    margin-left: auto;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-family: var(--mono);
+    font-size: 10px;
+    color: var(--text2);
+    -webkit-app-region: no-drag;
+  }
+
+  .dot {
+    width: 5px; height: 5px;
+    border-radius: 50%;
+    background: var(--green);
+    animation: blink 2s infinite;
+  }
+
+  @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.2} }
+
+  /* Layout */
+  .layout {
+    display: grid;
+    grid-template-columns: 300px 1fr;
+    flex: 1;
+    overflow: hidden;
+    position: relative;
+    z-index: 1;
+  }
+
+  /* Sidebar */
+  .sidebar {
+    background: var(--surface);
+    border-right: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+
+  .sidebar-section {
+    padding: 16px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .section-label {
+    font-family: var(--mono);
+    font-size: 10px;
+    color: var(--text3);
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    margin-bottom: 12px;
+  }
+
+  /* Token input */
+  .token-input-wrap {
+    position: relative;
+  }
+
+  .token-input {
+    width: 100%;
+    background: var(--surface2);
+    border: 1px solid var(--border2);
+    border-radius: 4px;
+    padding: 8px 36px 8px 10px;
+    color: var(--text);
+    font-family: var(--mono);
+    font-size: 11px;
+    outline: none;
+    transition: border-color 0.2s;
+  }
+
+  .token-input:focus { border-color: var(--accent); }
+  .token-input::placeholder { color: var(--text3); }
+
+  .token-toggle {
+    position: absolute;
+    right: 8px;
+    top: 50%;
+    transform: translateY(-50%);
+    background: none;
+    border: none;
+    color: var(--text2);
+    cursor: pointer;
+    font-size: 13px;
+    padding: 2px;
+  }
+
+  /* Vehicle info */
+  .vehicle-input {
+    width: 100%;
+    background: var(--surface2);
+    border: 1px solid var(--border2);
+    border-radius: 4px;
+    padding: 8px 10px;
+    color: var(--text);
+    font-family: var(--body);
+    font-size: 12px;
+    outline: none;
+    transition: border-color 0.2s;
+    margin-bottom: 8px;
+  }
+
+  .vehicle-input:focus { border-color: var(--accent); }
+  .vehicle-input::placeholder { color: var(--text3); }
+
+  /* Upload area */
+  .upload-area {
+    border: 1.5px dashed var(--border2);
+    border-radius: 6px;
+    padding: 20px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.2s;
+    position: relative;
+    background: var(--surface2);
+  }
+
+  .upload-area:hover, .upload-area.drag-over {
+    border-color: var(--accent);
+    background: rgba(232,81,26,0.05);
+  }
+
+  .upload-area input[type=file] {
+    position: absolute;
+    inset: 0;
+    opacity: 0;
+    cursor: pointer;
+    width: 100%;
+    height: 100%;
+  }
+
+  .upload-icon { font-size: 28px; margin-bottom: 8px; }
+
+  .upload-text {
+    font-size: 12px;
+    color: var(--text2);
+    line-height: 1.5;
+  }
+
+  .upload-text strong { color: var(--accent); font-weight: 500; }
+
+  .preview-img {
+    width: 100%;
+    border-radius: 4px;
+    margin-top: 10px;
+    border: 1px solid var(--border2);
+    max-height: 160px;
+    object-fit: cover;
+    display: none;
+  }
+
+  .remove-img {
+    display: none;
+    margin-top: 8px;
+    width: 100%;
+    background: rgba(239,68,68,0.1);
+    border: 1px solid rgba(239,68,68,0.3);
+    color: var(--red);
+    border-radius: 4px;
+    padding: 5px;
+    font-size: 11px;
+    cursor: pointer;
+    font-family: var(--mono);
+    transition: background 0.2s;
+  }
+
+  .remove-img:hover { background: rgba(239,68,68,0.2); }
+
+  /* History list */
+  .history-list {
+    flex: 1;
+    overflow-y: auto;
+    padding: 8px;
+  }
+
+  .history-list::-webkit-scrollbar { width: 4px; }
+  .history-list::-webkit-scrollbar-track { background: transparent; }
+  .history-list::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 2px; }
+
+  .history-item {
+    padding: 8px 10px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 12px;
+    color: var(--text2);
+    border: 1px solid transparent;
+    margin-bottom: 4px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    transition: all 0.15s;
+  }
+
+  .history-item:hover { background: var(--surface2); border-color: var(--border); color: var(--text); }
+  .history-item.active { background: rgba(232,81,26,0.1); border-color: rgba(232,81,26,0.3); color: var(--text); }
+
+  .new-chat-btn {
+    margin: 8px;
+    padding: 8px;
+    background: none;
+    border: 1px dashed var(--border2);
+    border-radius: 4px;
+    color: var(--text2);
+    font-size: 12px;
+    cursor: pointer;
+    width: calc(100% - 16px);
+    font-family: var(--body);
+    transition: all 0.15s;
+  }
+
+  .new-chat-btn:hover { border-color: var(--accent); color: var(--accent); }
+
+  /* Main chat area */
+  .chat-area {
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+
+  .chat-messages {
+    flex: 1;
+    overflow-y: auto;
+    padding: 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+  }
+
+  .chat-messages::-webkit-scrollbar { width: 4px; }
+  .chat-messages::-webkit-scrollbar-track { background: transparent; }
+  .chat-messages::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 2px; }
+
+  /* Welcome screen */
+  .welcome {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    gap: 16px;
+    text-align: center;
+    opacity: 0.6;
+  }
+
+  .welcome-hex {
+    width: 64px; height: 64px;
+    background: var(--accent);
+    clip-path: polygon(50% 0%,100% 25%,100% 75%,50% 100%,0% 75%,0% 25%);
+    animation: pulse-icon 3s ease-in-out infinite;
+  }
+
+  @keyframes pulse-icon {
+    0%,100% { filter: brightness(1); }
+    50% { filter: brightness(1.3); }
+  }
+
+  .welcome h2 {
+    font-family: var(--display);
+    font-size: 28px;
+    font-weight: 700;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+  }
+
+  .welcome p { font-size: 13px; color: var(--text2); max-width: 320px; line-height: 1.6; }
+
+  .welcome-tips {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    justify-content: center;
+    margin-top: 8px;
+  }
+
+  .tip-chip {
+    background: var(--surface2);
+    border: 1px solid var(--border2);
+    border-radius: 20px;
+    padding: 6px 14px;
+    font-size: 11px;
+    color: var(--text2);
+    cursor: pointer;
+    transition: all 0.15s;
+    font-family: var(--mono);
+  }
+
+  .tip-chip:hover { border-color: var(--accent); color: var(--accent); background: rgba(232,81,26,0.05); }
+
+  /* Messages */
+  .message {
+    display: flex;
+    gap: 12px;
+    animation: fadeUp 0.3s ease;
+  }
+
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .message.user { flex-direction: row-reverse; }
+
+  .msg-avatar {
+    width: 32px; height: 32px;
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+    flex-shrink: 0;
+    font-family: var(--display);
+    font-weight: 700;
+  }
+
+  .message.user .msg-avatar { background: var(--accent); color: white; }
+  .message.ai .msg-avatar {
+    background: var(--surface2);
+    border: 1px solid var(--border2);
+    color: var(--accent);
+    font-size: 12px;
+  }
+
+  .msg-bubble {
+    max-width: 70%;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 2px 8px 8px 8px;
+    padding: 12px 16px;
+    font-size: 13px;
+    line-height: 1.7;
+    color: var(--text);
+    position: relative;
+  }
+
+  .message.user .msg-bubble {
+    background: rgba(232,81,26,0.12);
+    border-color: rgba(232,81,26,0.25);
+    border-radius: 8px 2px 8px 8px;
+    color: var(--text);
+  }
+
+  .msg-bubble::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 1px;
+    background: linear-gradient(90deg, var(--accent), transparent);
+    opacity: 0.4;
+  }
+
+  .message.user .msg-bubble::before { display: none; }
+
+  .msg-image {
+    max-width: 240px;
+    border-radius: 4px;
+    margin-bottom: 8px;
+    border: 1px solid var(--border2);
+    display: block;
+  }
+
+  .msg-time {
+    font-family: var(--mono);
+    font-size: 10px;
+    color: var(--text3);
+    margin-top: 6px;
+  }
+
+  /* Severity badges */
+  .severity-critical { color: var(--red); font-weight: 500; }
+  .severity-moderate { color: var(--yellow); font-weight: 500; }
+  .severity-minor { color: var(--green); font-weight: 500; }
+
+  /* Typing indicator */
+  .typing {
+    display: flex;
+    gap: 12px;
+    animation: fadeUp 0.3s ease;
+  }
+
+  .typing-bubble {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 2px 8px 8px 8px;
+    padding: 12px 16px;
+    display: flex;
+    gap: 5px;
+    align-items: center;
+  }
+
+  .typing-dot {
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: var(--accent);
+    animation: typing 1.2s infinite;
+  }
+
+  .typing-dot:nth-child(2) { animation-delay: 0.2s; }
+  .typing-dot:nth-child(3) { animation-delay: 0.4s; }
+
+  @keyframes typing {
+    0%,60%,100% { transform: translateY(0); opacity: 0.4; }
+    30% { transform: translateY(-5px); opacity: 1; }
+  }
+
+  /* Input bar */
+  .input-bar {
+    padding: 16px 24px;
+    border-top: 1px solid var(--border);
+    background: var(--surface);
+    display: flex;
+    gap: 10px;
+    align-items: flex-end;
+  }
+
+  .input-wrap {
+    flex: 1;
+    background: var(--surface2);
+    border: 1px solid var(--border2);
+    border-radius: 6px;
+    display: flex;
+    align-items: flex-end;
+    padding: 10px 14px;
+    gap: 10px;
+    transition: border-color 0.2s;
+  }
+
+  .input-wrap:focus-within { border-color: var(--accent); }
+
+  .msg-input {
+    flex: 1;
+    background: none;
+    border: none;
+    outline: none;
+    color: var(--text);
+    font-family: var(--body);
+    font-size: 13px;
+    resize: none;
+    max-height: 100px;
+    line-height: 1.5;
+  }
+
+  .msg-input::placeholder { color: var(--text3); }
+
+  .send-btn {
+    background: var(--accent);
+    border: none;
+    border-radius: 4px;
+    width: 38px;
+    height: 38px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    transition: all 0.15s;
+    color: white;
+    font-size: 16px;
+  }
+
+  .send-btn:hover { background: var(--accent2); transform: scale(1.05); }
+  .send-btn:disabled { opacity: 0.4; cursor: not-allowed; transform: none; }
+
+  /* Error toast */
+  .toast {
+    position: fixed;
+    bottom: 80px;
+    left: 50%;
+    transform: translateX(-50%) translateY(20px);
+    background: rgba(239,68,68,0.15);
+    border: 1px solid rgba(239,68,68,0.4);
+    color: var(--red);
+    padding: 10px 20px;
+    border-radius: 4px;
+    font-size: 12px;
+    font-family: var(--mono);
+    opacity: 0;
+    transition: all 0.3s;
+    z-index: 1000;
+    pointer-events: none;
+  }
+
+  .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+  /* Scrollbar */
+  ::-webkit-scrollbar { width: 4px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: var(--border2); }
+</style>
+</head>
+<body>
+
+<!-- Titlebar -->
+<div class="titlebar">
+  <div class="titlebar-logo">
+    <div class="hex"></div>
+    <span class="titlebar-name">ENGINE<span>AI</span></span>
+  </div>
+  <div class="titlebar-status">
+    <div class="dot"></div>
+    <span id="status-text">SYSTEM READY</span>
+  </div>
+</div>
+
+<!-- Layout -->
+<div class="layout">
+
+  <!-- Sidebar -->
+  <div class="sidebar">
+
+    <!-- Token -->
+    <div class="sidebar-section">
+      <div class="section-label">GitHub Token</div>
+      <div class="token-input-wrap">
+        <input class="token-input" type="password" id="token-input" placeholder="ghp_your_token_here" />
+        <button class="token-toggle" id="token-toggle" title="Show/hide token">👁</button>
+      </div>
+    </div>
+
+    <!-- Vehicle -->
+    <div class="sidebar-section">
+      <div class="section-label">Vehicle Info</div>
+      <input class="vehicle-input" type="text" id="vehicle-input" placeholder="Year / Make / Model (e.g. 2019 Honda Civic)" />
+    </div>
+
+    <!-- Photo upload -->
+    <div class="sidebar-section">
+      <div class="section-label">Upload Car Photo</div>
+      <div class="upload-area" id="upload-area">
+        <input type="file" id="file-input" accept="image/*" />
+        <div class="upload-icon">📷</div>
+        <div class="upload-text">
+          <strong>Click or drag</strong> a photo here<br>
+          Engine bay, dashboard, damage, etc.
+        </div>
+      </div>
+      <img class="preview-img" id="preview-img" alt="Uploaded photo" />
+      <button class="remove-img" id="remove-img">✕ Remove photo</button>
+    </div>
+
+    <!-- Chat history -->
+    <div class="section-label" style="padding: 12px 16px 4px; border-top: 1px solid var(--border);">Sessions</div>
+    <button class="new-chat-btn" id="new-chat-btn">+ New Session</button>
+    <div class="history-list" id="history-list"></div>
+
+  </div>
+
+  <!-- Chat -->
+  <div class="chat-area">
+    <div class="chat-messages" id="chat-messages">
+      <div class="welcome" id="welcome-screen">
+        <div class="welcome-hex"></div>
+        <h2>Engine<span style="color:var(--accent)">AI</span></h2>
+        <p>Describe your car's symptoms or upload a photo for an instant AI-powered diagnosis.</p>
+        <div class="welcome-tips">
+          <div class="tip-chip" onclick="useTip(this)">Engine knocking on startup</div>
+          <div class="tip-chip" onclick="useTip(this)">Check engine light on</div>
+          <div class="tip-chip" onclick="useTip(this)">White smoke from exhaust</div>
+          <div class="tip-chip" onclick="useTip(this)">Car won't start</div>
+          <div class="tip-chip" onclick="useTip(this)">Rough idle at low RPM</div>
+          <div class="tip-chip" onclick="useTip(this)">Oil leak under car</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="input-bar">
+      <div class="input-wrap">
+        <textarea class="msg-input" id="msg-input" rows="1"
+          placeholder="Describe your engine symptoms..."></textarea>
+      </div>
+      <button class="send-btn" id="send-btn" title="Send">&#9658;</button>
+    </div>
+  </div>
+
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+  let messages = [];
+  let imageBase64 = null;
+  let imageType = null;
+  let sessions = [];
+  let currentSessionIndex = -1;
+  let isLoading = false;
+
+  const tokenInput = document.getElementById('token-input');
+  const tokenToggle = document.getElementById('token-toggle');
+  const vehicleInput = document.getElementById('vehicle-input');
+  const fileInput = document.getElementById('file-input');
+  const uploadArea = document.getElementById('upload-area');
+  const previewImg = document.getElementById('preview-img');
+  const removeImg = document.getElementById('remove-img');
+  const chatMessages = document.getElementById('chat-messages');
+  const msgInput = document.getElementById('msg-input');
+  const sendBtn = document.getElementById('send-btn');
+  const welcomeScreen = document.getElementById('welcome-screen');
+  const historyList = document.getElementById('history-list');
+  const statusText = document.getElementById('status-text');
+  const toast = document.getElementById('toast');
+
+  // Load saved token
+  const savedToken = localStorage.getItem('gh_token');
+  if (savedToken) tokenInput.value = savedToken;
+
+  tokenInput.addEventListener('change', () => {
+    localStorage.setItem('gh_token', tokenInput.value);
+  });
+
+  tokenToggle.addEventListener('click', () => {
+    tokenInput.type = tokenInput.type === 'password' ? 'text' : 'password';
+  });
+
+  // Auto-resize textarea
+  msgInput.addEventListener('input', () => {
+    msgInput.style.height = 'auto';
+    msgInput.style.height = Math.min(msgInput.scrollHeight, 100) + 'px';
+  });
+
+  msgInput.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      sendMessage();
+    }
+  });
+
+  sendBtn.addEventListener('click', sendMessage);
+
+  // File upload
+  fileInput.addEventListener('change', handleFile);
+
+  uploadArea.addEventListener('dragover', (e) => {
+    e.preventDefault();
+    uploadArea.classList.add('drag-over');
+  });
+
+  uploadArea.addEventListener('dragleave', () => uploadArea.classList.remove('drag-over'));
+
+  uploadArea.addEventListener('drop', (e) => {
+    e.preventDefault();
+    uploadArea.classList.remove('drag-over');
+    const file = e.dataTransfer.files[0];
+    if (file && file.type.startsWith('image/')) loadImage(file);
+  });
+
+  removeImg.addEventListener('click', () => {
+    imageBase64 = null;
+    imageType = null;
+    previewImg.style.display = 'none';
+    previewImg.src = '';
+    removeImg.style.display = 'none';
+    fileInput.value = '';
+  });
+
+  function handleFile(e) {
+    const file = e.target.files[0];
+    if (file) loadImage(file);
+  }
+
+  function loadImage(file) {
+    imageType = file.type;
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const result = e.target.result;
+      imageBase64 = result.split(',')[1];
+      previewImg.src = result;
+      previewImg.style.display = 'block';
+      removeImg.style.display = 'block';
+    };
+    reader.readAsDataURL(file);
+  }
+
+  function useTip(el) {
+    msgInput.value = el.textContent;
+    msgInput.focus();
+  }
+
+  function showToast(msg) {
+    toast.textContent = msg;
+    toast.classList.add('show');
+    setTimeout(() => toast.classList.remove('show'), 3500);
+  }
+
+  function getTime() {
+    return new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+  }
+
+  function hideWelcome() {
+    if (welcomeScreen) welcomeScreen.style.display = 'none';
+  }
+
+  function addMessage(role, content, imgSrc = null) {
+    hideWelcome();
+    const div = document.createElement('div');
+    div.className = `message ${role}`;
+
+    const avatar = document.createElement('div');
+    avatar.className = 'msg-avatar';
+    avatar.textContent = role === 'user' ? 'U' : 'AI';
+
+    const bubble = document.createElement('div');
+    bubble.className = 'msg-bubble';
+
+    if (imgSrc) {
+      const img = document.createElement('img');
+      img.className = 'msg-image';
+      img.src = imgSrc;
+      bubble.appendChild(img);
+    }
+
+    // Format AI response with line breaks
+    const text = document.createElement('div');
+    text.innerHTML = content.replace(/\n/g, '<br>');
+    bubble.appendChild(text);
+
+    const time = document.createElement('div');
+    time.className = 'msg-time';
+    time.textContent = getTime();
+    bubble.appendChild(time);
+
+    div.appendChild(avatar);
+    div.appendChild(bubble);
+    chatMessages.appendChild(div);
+    chatMessages.scrollTop = chatMessages.scrollHeight;
+  }
+
+  function showTyping() {
+    const div = document.createElement('div');
+    div.className = 'typing';
+    div.id = 'typing-indicator';
+    div.innerHTML = `
+      <div class="msg-avatar" style="background:var(--surface2);border:1px solid var(--border2);color:var(--accent);font-family:var(--display);font-weight:700;font-size:12px;width:32px;height:32px;border-radius:4px;display:flex;align-items:center;justify-content:center;">AI</div>
+      <div class="typing-bubble">
+        <div class="typing-dot"></div>
+        <div class="typing-dot"></div>
+        <div class="typing-dot"></div>
+      </div>`;
+    chatMessages.appendChild(div);
+    chatMessages.scrollTop = chatMessages.scrollHeight;
+  }
+
+  function removeTyping() {
+    const t = document.getElementById('typing-indicator');
+    if (t) t.remove();
+  }
+
+  async function sendMessage() {
+    const text = msgInput.value.trim();
+    if ((!text && !imageBase64) || isLoading) return;
+
+    const token = tokenInput.value.trim();
+    if (!token || !token.startsWith('ghp_')) {
+      showToast('⚠ Please enter your GitHub token (starts with ghp_)');
+      return;
+    }
+
+    // Save token
+    localStorage.setItem('gh_token', token);
+
+    const userText = text || 'Please analyze this car photo.';
+    const imgPreview = imageBase64 ? `data:${imageType};base64,${imageBase64}` : null;
+
+    addMessage('user', userText, imgPreview);
+
+    // Build message for API
+    let vehicle = vehicleInput.value.trim();
+    let fullText = vehicle ? `[Vehicle: ${vehicle}] ${userText}` : userText;
+
+    messages.push({ role: 'user', content: fullText });
+
+    const capturedImage = imageBase64;
+    const capturedType = imageType;
+
+    // Clear input
+    msgInput.value = '';
+    msgInput.style.height = 'auto';
+    imageBase64 = null;
+    imageType = null;
+    previewImg.style.display = 'none';
+    previewImg.src = '';
+    removeImg.style.display = 'none';
+    fileInput.value = '';
+
+    isLoading = true;
+    sendBtn.disabled = true;
+    statusText.textContent = 'ANALYZING...';
+    showTyping();
+
+    try {
+      const result = await window.electronAPI.diagnose({
+        token,
+        messages,
+        imageBase64: capturedImage,
+        imageType: capturedType
+      });
+
+      removeTyping();
+
+      if (result.success) {
+        messages.push({ role: 'assistant', content: result.reply });
+        addMessage('ai', result.reply);
+        saveSession(userText);
+        statusText.textContent = 'SYSTEM READY';
+      } else {
+        showToast('Error: ' + result.error);
+        messages.pop();
+        statusText.textContent = 'ERROR';
+      }
+    } catch (err) {
+      removeTyping();
+      showToast('Connection error. Check your token.');
+      messages.pop();
+      statusText.textContent = 'ERROR';
+    }
+
+    isLoading = false;
+    sendBtn.disabled = false;
+  }
+
+  function saveSession(firstMsg) {
+    if (currentSessionIndex === -1) {
+      sessions.unshift({ label: firstMsg.slice(0, 40), messages: [...messages] });
+      currentSessionIndex = 0;
+    } else {
+      sessions[currentSessionIndex].messages = [...messages];
+    }
+    renderHistory();
+  }
+
+  function renderHistory() {
+    historyList.innerHTML = '';
+    sessions.forEach((s, i) => {
+      const item = document.createElement('div');
+      item.className = `history-item${i === currentSessionIndex ? ' active' : ''}`;
+      item.textContent = s.label;
+      item.onclick = () => loadSession(i);
+      historyList.appendChild(item);
+    });
+  }
+
+  function loadSession(i) {
+    currentSessionIndex = i;
+    messages = [...sessions[i].messages];
+    chatMessages.innerHTML = '';
+    welcomeScreen && chatMessages.appendChild(welcomeScreen);
+    welcomeScreen.style.display = 'none';
+    messages.forEach((m) => {
+      if (m.role !== 'system') addMessage(m.role === 'user' ? 'user' : 'ai', m.content);
+    });
+    renderHistory();
+  }
+
+  document.getElementById('new-chat-btn').onclick = () => {
+    messages = [];
+    currentSessionIndex = -1;
+    chatMessages.innerHTML = '';
+    const w = document.createElement('div');
+    w.className = 'welcome';
+    w.id = 'welcome-screen';
+    w.innerHTML = `
+      <div class="welcome-hex"></div>
+      <h2>Engine<span style="color:var(--accent)">AI</span></h2>
+      <p>Describe your car's symptoms or upload a photo for an instant AI-powered diagnosis.</p>
+      <div class="welcome-tips">
+        <div class="tip-chip" onclick="useTip(this)">Engine knocking on startup</div>
+        <div class="tip-chip" onclick="useTip(this)">Check engine light on</div>
+        <div class="tip-chip" onclick="useTip(this)">White smoke from exhaust</div>
+        <div class="tip-chip" onclick="useTip(this)">Car won't start</div>
+        <div class="tip-chip" onclick="useTip(this)">Rough idle at low RPM</div>
+        <div class="tip-chip" onclick="useTip(this)">Oil leak under car</div>
+      </div>`;
+    chatMessages.appendChild(w);
+    renderHistory();
+  };
+</script>
+</body>
+</html>
