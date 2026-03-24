@@ -25,12 +25,12 @@
     },
     "mac": {
       "target": "dmg",
-      "icon": "icon.ico",
+      "icon": "icon.png",
       "category": "public.app-category.utilities"
     },
     "linux": {
       "target": "deb",
-      "icon": "icon.ico",
+      "icon": "icon.png",
       "category": "Utility",
       "maintainer": "EngineAI",
       "description": "AI-powered car engine diagnostic desktop app"
