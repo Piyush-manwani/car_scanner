@@ -6,20 +6,36 @@ An AI-powered desktop app that diagnoses car engine problems from text descripti
 
 ---
 
-## Quick Install (Windows)
+## Quick Install
 
-Open PowerShell and run:
+### Windows (PowerShell)
 
 ```powershell
 irm https://raw.githubusercontent.com/Piyush-manwani/car_scanner/main/install.ps1 | iex
 ```
 
-That's it. EngineAI installs automatically and the `engineai` command becomes available in your terminal.
+### All platforms (Python)
 
-```powershell
-engineai          # launch the app
-engineai update   # update to latest version
-engineai help     # show all commands
+```bash
+python3 -c "import urllib.request; exec(urllib.request.urlopen('https://raw.githubusercontent.com/Piyush-manwani/car_scanner/main/install.py').read())"
+```
+
+Or download and run directly:
+
+```bash
+# Windows
+python install.py
+
+# macOS / Linux
+python3 install.py
+```
+
+After installing, launch the app from your terminal:
+
+```bash
+engineai            # launch the app
+engineai update     # update to latest version
+engineai help       # show all commands
 ```
 
 ---
@@ -32,7 +48,6 @@ engineai help     # show all commands
 - **Repair cost estimates** — get a rough USD cost range for any repair
 - **DIY vs mechanic** — the AI tells you if you can fix it yourself or need a professional
 - **Multi-turn conversation** — ask follow-up questions and the AI remembers the full context
-- **Repair history tracker** — log every diagnosis and repair with status, cost and notes
 - **Session history** — previous conversations saved in the sidebar
 - **Token saved automatically** — paste your GitHub token once and the app remembers it
 
@@ -86,7 +101,6 @@ EngineAI uses the GitHub Models API which is completely free. You just need a Gi
 4. Either type your symptoms in the chat box or drag and drop a photo into the upload area
 5. Press Enter or click send
 6. Get your AI diagnosis instantly
-7. Click "Save to History" to log the repair
 
 ### Example symptoms
 
@@ -98,20 +112,6 @@ Car won't start, just clicking sound
 P0301 fault code
 Oil leak underneath the car
 ```
-
----
-
-## Repair History Tracker
-
-Every diagnosis can be saved to your repair history with:
-
-- Vehicle — year, make, model
-- Symptom — what the problem was
-- Status — Pending / Monitoring / Fixed
-- Cost — what the repair cost
-- Notes — mechanic name, garage, extra details
-
-Update the status directly from the history card as the repair progresses.
 
 ---
 
@@ -128,9 +128,6 @@ npm run build:mac
 
 # Linux DEB
 npm run build:linux
-
-# All platforms at once
-npm run build:all
 ```
 
 ---
@@ -143,33 +140,13 @@ npm run build:all
 | AI model | GPT-4o via GitHub Models |
 | GitHub Models SDK | @azure-rest/ai-inference |
 | Installer | electron-builder |
-| History storage | Local JSON file |
 | CI/CD | GitHub Actions |
-
----
-
-## Project Structure
-
-```
-car_scanner/
-├── main.js            Electron main process and IPC handlers
-├── preload.js         Secure bridge between main and renderer
-├── index.html         Full app UI (HTML, CSS, JS)
-├── history.js         Repair history read/write module
-├── mod-manager.js     Mods marketplace system
-├── install.ps1        Windows one-line installer script
-├── icon.ico           Windows app icon
-├── icon.png           macOS and Linux app icon
-├── mods/
-│   └── pdf-export.js  PDF Export mod
-└── package.json       Project config and build settings
-```
 
 ---
 
 ## Disclaimer
 
-EngineAI provides AI-generated diagnostic suggestions for informational purposes only. Always consult a qualified mechanic before making repairs. The developers are not responsible for any damage caused by acting on the app's suggestions.
+EngineAI provides AI-generated diagnostic suggestions for informational purposes only. Always consult a qualified mechanic before making repairs. The developers are not responsible for any damage caused by acting on its suggestions.
 
 ---
 
