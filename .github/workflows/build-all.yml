@@ -58,35 +58,6 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-  build-linux-deb:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 20
-      - run: npm install
-      - name: Install build tools
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y fakeroot dpkg
-      - name: Build DEB
-        run: npx electron-builder --linux deb
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      - uses: actions/upload-artifact@v4
-        with:
-          name: EngineAI-Linux-deb
-          path: dist/*.deb
-          retention-days: 30
-      - name: Attach to Release
-        if: github.event_name == 'release'
-        uses: softprops/action-gh-release@v2
-        with:
-          files: dist/*.deb
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
   build-linux-rpm:
     runs-on: ubuntu-latest
     steps:
@@ -127,7 +98,7 @@ jobs:
       - name: Install build tools
         run: |
           sudo apt-get update
-          sudo apt-get install -y fakeroot bsdtar libarchive-tools
+          sudo apt-get install -y fakeroot libarchive-tools
       - name: Build Pacman package
         run: npx electron-builder --linux pacman
         env:
