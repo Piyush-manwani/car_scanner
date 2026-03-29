@@ -9,8 +9,11 @@
     "build": "electron-builder --win msi",
     "build:win": "electron-builder --win msi",
     "build:mac": "electron-builder --mac dmg",
-    "build:linux": "electron-builder --linux deb",
-    "build:all": "electron-builder --win msi --mac dmg --linux deb"
+    "build:linux:deb": "electron-builder --linux deb",
+    "build:linux:rpm": "electron-builder --linux rpm",
+    "build:linux:pacman": "electron-builder --linux pacman",
+    "build:linux:all": "electron-builder --linux deb rpm pacman",
+    "build:all": "electron-builder --win msi --mac dmg --linux deb rpm pacman"
   },
   "build": {
     "appId": "com.engineai.scanner",
@@ -29,15 +32,14 @@
       "category": "public.app-category.utilities"
     },
     "linux": {
-      "target": "deb",
+      "target": ["deb", "rpm", "pacman"],
       "icon": "icon.png",
       "category": "Utility",
       "maintainer": "EngineAI",
       "description": "AI-powered car engine diagnostic desktop app"
     },
-    "deb": {
-      "depends": []
-    },
+    "deb": { "depends": [] },
+    "rpm": { "depends": [] },
     "files": [
       "main.js",
       "preload.js",
