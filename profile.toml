@@ -1,0 +1,10 @@
+[user]
+name = "Piyush"
+
+[[vehicles]]
+year  = 2019
+make  = "Honda"
+model = "Civic"
+
+[preferences]
+currency = "USD"
