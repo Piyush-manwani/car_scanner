@@ -1,0 +1,7 @@
+{
+  "token": "ghp_...",
+  "model": "gpt-4o",
+  "theme": "dark",
+  "maxTokens": 1024,
+  "temperature": 0.4
+}
