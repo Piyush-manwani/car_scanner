@@ -18,27 +18,54 @@ function createWindow() {
 
 app.whenReady().then(() => {
   createWindow();
-  global.settingsModule = require('./settings');
-  global.profileModule  = require('./profile');
 
+  global.settingsModule  = require('./settings');
+  global.profileModule   = require('./profile');
+  global.luaRunner       = require('./lua-runner');
+
+  // Log startup message from Lua
+  const startupMsg = global.luaRunner.onStartup();
+  console.log('[Lua]', startupMsg);
+
+  // ── JSON Settings ──
   ipcMain.handle('settings-load',   ()        => global.settingsModule.loadSettings());
   ipcMain.handle('settings-save',   (e, data) => global.settingsModule.saveSettings(data));
   ipcMain.handle('settings-path',   ()        => global.settingsModule.getSettingsPath());
+
+  // ── TOML Profile ──
   ipcMain.handle('profile-load',    ()        => global.profileModule.loadProfile());
   ipcMain.handle('profile-save',    (e, data) => global.profileModule.saveProfile(data));
   ipcMain.handle('profile-path',    ()        => global.profileModule.getProfilePath());
   ipcMain.handle('profile-editor',  ()        => global.profileModule.openProfileInEditor());
   ipcMain.handle('profile-vehicle', ()        => global.profileModule.getDefaultVehicle());
+
+  // ── Lua Automation ──
+  ipcMain.handle('lua-path',   ()          => global.luaRunner.getAutomationPath());
+  ipcMain.handle('lua-editor', ()          => global.luaRunner.openAutomationInEditor());
+  ipcMain.handle('lua-vehicle-change', (e, { vehicle }) =>
+    global.luaRunner.onVehicleChange(vehicle));
 });
 
 app.on('window-all-closed', () => { if (process.platform !== 'darwin') app.quit(); });
 
+// ── AI Diagnosis with Lua hooks ──
 ipcMain.handle('diagnose', async (event, { token, messages, imageBase64, imageType }) => {
   try {
     const ModelClient = require('@azure-rest/ai-inference').default;
     const { isUnexpected } = require('@azure-rest/ai-inference');
     const { AzureKeyCredential } = require('@azure/core-auth');
-    const cfg = global.settingsModule.loadSettings();
+
+    const cfg     = global.settingsModule.loadSettings();
+    const vehicle = global.profileModule.getDefaultVehicle();
+
+    // Get the last user message
+    const lastMsg = messages[messages.length - 1];
+    let content   = typeof lastMsg.content === 'string' ? lastMsg.content : '';
+
+    // Run Lua on_before_diagnose hook
+    if (!imageBase64) {
+      content = global.luaRunner.onBeforeDiagnose(content, vehicle);
+    }
 
     const client = ModelClient(
       'https://models.inference.ai.azure.com',
@@ -52,9 +79,6 @@ ipcMain.handle('diagnose', async (event, { token, messages, imageBase64, imageTy
 4. State if DIY-fixable or needs a mechanic
 5. Give repair cost range in USD
 6. If analyzing a photo, describe exactly what you see and what it indicates`;
-
-    const lastMsg = messages[messages.length - 1];
-    const content = typeof lastMsg.content === 'string' ? lastMsg.content : '';
 
     const lastUserMsg = imageBase64
       ? { role: 'user', content: [
@@ -79,7 +103,13 @@ ipcMain.handle('diagnose', async (event, { token, messages, imageBase64, imageTy
     });
 
     if (isUnexpected(response)) throw new Error(response.body.error?.message || 'API error');
-    return { success: true, reply: response.body.choices[0].message.content };
+
+    let reply = response.body.choices[0].message.content;
+
+    // Run Lua on_after_diagnose hook
+    reply = global.luaRunner.onAfterDiagnose(reply, content);
+
+    return { success: true, reply };
   } catch (err) {
     return { success: false, error: err.message };
   }
