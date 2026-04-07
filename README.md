@@ -36,7 +36,26 @@ After installing, launch the app from your terminal:
 engineai            # launch the app
 engineai update     # update to latest version
 engineai help       # show all commands
+##Structure
 ```
+```bash
+build-all.yml
+README.md
+automation.lua
+icon.ico
+index.html
+icon.png
+install.ps1
+install.py
+lua-runner.js
+main.js
+package.json
+preload.js
+profile.example.toml
+profile.js
+settings.js
+settings.json
+
 
 ---
 
