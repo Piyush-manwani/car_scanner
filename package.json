@@ -9,42 +9,31 @@
     "build": "electron-builder --win msi",
     "build:win": "electron-builder --win msi",
     "build:mac": "electron-builder --mac dmg",
-    "build:linux:deb": "electron-builder --linux deb",
     "build:linux:rpm": "electron-builder --linux rpm",
     "build:linux:pacman": "electron-builder --linux pacman",
-    "build:linux:all": "electron-builder --linux deb rpm pacman",
-    "build:all": "electron-builder --win msi --mac dmg --linux deb rpm pacman"
+    "build:all": "electron-builder --win msi --mac dmg --linux rpm pacman"
   },
   "build": {
     "appId": "com.engineai.scanner",
     "productName": "EngineAI",
-    "win": {
-      "target": "msi",
-      "icon": "icon.ico"
-    },
-    "msi": {
-      "oneClick": false,
-      "perMachine": false
-    },
-    "mac": {
-      "target": "dmg",
-      "icon": "icon.png",
-      "category": "public.app-category.utilities"
-    },
+    "win": { "target": "msi", "icon": "icon.ico" },
+    "msi": { "oneClick": false, "perMachine": false },
+    "mac": { "target": "dmg", "icon": "icon.png", "category": "public.app-category.utilities" },
     "linux": {
-      "target": ["deb", "rpm", "pacman"],
+      "target": ["rpm", "pacman"],
       "icon": "icon.png",
       "category": "Utility",
       "maintainer": "EngineAI",
       "description": "AI-powered car engine diagnostic desktop app"
     },
-    "deb": { "depends": [] },
-    "rpm": { "depends": [] },
     "files": [
       "main.js",
       "preload.js",
       "index.html",
-      "history.js",
+      "settings.js",
+      "profile.js",
+      "lua-runner.js",
+      "automation.lua",
       "package.json",
       "node_modules/**/*"
     ]
@@ -52,7 +41,8 @@
   "dependencies": {
     "@azure-rest/ai-inference": "latest",
     "@azure/core-auth": "latest",
-    "@azure/core-sse": "latest"
+    "@azure/core-sse": "latest",
+    "fengari": "^0.1.4"
   },
   "devDependencies": {
     "electron": "^29.0.0",
